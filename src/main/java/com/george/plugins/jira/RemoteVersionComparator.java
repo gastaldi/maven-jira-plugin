@@ -2,7 +2,7 @@ package com.george.plugins.jira;
 
 import java.util.Comparator;
 
-import com.atlassian.jira.rpc.soap.client.RemoteVersion;
+import com.atlassian.jira.rest.RemoteVersion;
 
 public class RemoteVersionComparator implements Comparator<RemoteVersion> {
 
