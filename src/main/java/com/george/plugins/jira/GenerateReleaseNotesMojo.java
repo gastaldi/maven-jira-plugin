@@ -8,11 +8,12 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
+import java.util.List;
 
 import org.apache.maven.plugin.logging.Log;
 
-import com.atlassian.jira.rpc.soap.client.JiraSoapService;
-import com.atlassian.jira.rpc.soap.client.RemoteIssue;
+import com.atlassian.jira.rest.Issue;
+import com.atlassian.jira.rest.JiraService;
 
 /**
  * Goal that generates release notes based on a version in a JIRA project.
@@ -86,9 +87,9 @@ public class GenerateReleaseNotesMojo extends AbstractJiraMojo {
 	String afterText;
 
 	@Override
-	public void doExecute(JiraSoapService jiraService, String loginToken)
+	public void doExecute(JiraService jiraService)
 			throws Exception {
-		RemoteIssue[] issues = getIssues(jiraService, loginToken);
+	    List<Issue> issues = getIssues(jiraService);
 		output(issues);
 	}
 
@@ -101,18 +102,17 @@ public class GenerateReleaseNotesMojo extends AbstractJiraMojo {
 	 * @throws RemoteException
 	 * @throws com.atlassian.jira.rpc.soap.client.RemoteException
 	 */
-	RemoteIssue[] getIssues(JiraSoapService jiraService, String loginToken)
-			throws RemoteException,
-			com.atlassian.jira.rpc.soap.client.RemoteException {
+	List<Issue> getIssues(JiraService jiraService)
+			throws RemoteException {
 		Log log = getLog();
 		String jql = format(jqlTemplate, jiraProjectKey, releaseVersion);
 		if (log.isInfoEnabled()) {
 			log.info("JQL: " + jql);
 		}
-		RemoteIssue[] issues = jiraService.getIssuesFromJqlSearch(loginToken,
+		List<Issue> issues = jiraService.getIssuesFromJqlSearch(
 				jql, maxIssues);
 		if (log.isInfoEnabled()) {
-			log.info("Issues: " + issues.length);
+			log.info("Issues: " + issues.size());
 		}
 		return issues;
 	}
@@ -122,7 +122,7 @@ public class GenerateReleaseNotesMojo extends AbstractJiraMojo {
 	 * 
 	 * @param issues
 	 */
-	void output(RemoteIssue[] issues) throws IOException {
+	void output(List<Issue> issues) throws IOException {
 		Log log = getLog();
 		if (targetFile == null) {
 			log.warn("No targetFile specified. Ignoring");
@@ -139,7 +139,7 @@ public class GenerateReleaseNotesMojo extends AbstractJiraMojo {
 			if (beforeText != null) {
 				ps.println(beforeText);
 			}
-			for (RemoteIssue issue : issues) {
+			for (Issue issue : issues) {
 				String issueDesc = format(issueTemplate, issue.getKey(),
 						issue.getSummary());
 				ps.println(issueDesc);
